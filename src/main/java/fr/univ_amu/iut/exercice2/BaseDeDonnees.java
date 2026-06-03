@@ -8,7 +8,6 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
-
 import org.sqlite.SQLiteConfig;
 import org.sqlite.SQLiteDataSource;
 
@@ -41,11 +40,11 @@ public class BaseDeDonnees {
     // TODO exercice 2 : créer et configurer la DataSource SQLite, et l'affecter à `source`.
     //
     SQLiteConfig config = new SQLiteConfig();
-    config.enforceForeignKeys(true);   // SQLite n'applique les FK que si on le demande
+    config.enforceForeignKeys(true); // SQLite n'applique les FK que si on le demande
     SQLiteDataSource sqlite = new SQLiteDataSource(config);
     sqlite.setUrl("jdbc:sqlite:" + chemin);
     source = sqlite;
-    
+
     return source;
   }
 
