@@ -1,5 +1,7 @@
 package fr.univ_amu.iut.exercice3;
 
+import fr.univ_amu.iut.jdbc.DataAccessException;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,7 +41,17 @@ public class TaxonDao {
     // ps.executeQuery()) ;
     // - pour chaque ligne, appeler depuis(rs) et l'ajouter à `taxons`.
     // - en cas de SQLException, lever une DataAccessException.
-
+    try (Connection connexion = source.getConnection();
+        PreparedStatement ps = connexion.prepareStatement(sql)) {
+      ps.setString(1, sql);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          taxons.add(depuis(rs));
+        }
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException("Erreur", e);
+    }
     return taxons;
   }
 
@@ -56,7 +68,15 @@ public class TaxonDao {
     // - exécuter ; si le ResultSet contient une ligne, construire le Taxon avec
     // depuis(rs)
     // et l'envelopper dans un Optional ; sinon, laisser `resultat` vide.
-
+    try (Connection connexion = source.getConnection();
+        PreparedStatement ps = connexion.prepareStatement(sql);
+        ResultSet rs = ps.executeQuery()) {
+      while (rs.next()) {
+        resultat = Optional.of(depuis(rs));
+      }
+    } catch (SQLException e) {
+      throw new DataAccessException("Erreur", e);
+    }
     return resultat;
   }
 
