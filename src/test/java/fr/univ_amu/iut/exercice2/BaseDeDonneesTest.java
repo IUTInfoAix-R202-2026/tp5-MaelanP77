@@ -9,21 +9,17 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import javax.sql.DataSource;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Test de l'exercice 2 : on crée une base SQLite dans un fichier temporaire
- * (nettoyé
- * automatiquement par {@code @TempDir}), on l'initialise, puis on vérifie
- * qu'elle contient bien les
+ * Test de l'exercice 2 : on crée une base SQLite dans un fichier temporaire (nettoyé
+ * automatiquement par {@code @TempDir}), on l'initialise, puis on vérifie qu'elle contient bien les
  * données du fil rouge.
  */
 class BaseDeDonneesTest {
 
-  @TempDir
-  Path dossier;
+  @TempDir Path dossier;
 
   private DataSource baseInitialisee() {
     DataSource source = BaseDeDonnees.surFichier(dossier.resolve("test.db").toString());
@@ -49,7 +45,8 @@ class BaseDeDonneesTest {
 
     try (Connection connexion = source.getConnection();
         Statement st = connexion.createStatement();
-        ResultSet rs = st.executeQuery("SELECT nom_convivial FROM site WHERE numero_carre = '640380'")) {
+        ResultSet rs =
+            st.executeQuery("SELECT nom_convivial FROM site WHERE numero_carre = '640380'")) {
       rs.next();
       assertThat(rs.getString(1)).isEqualTo("Étang de la Tuilière");
     }
@@ -65,10 +62,11 @@ class BaseDeDonneesTest {
       // 'ZZZZZZ' n'existe pas : l'insertion doit être refusée SI les clés étrangères
       // sont activées.
       assertThatThrownBy(
-          () -> st.execute(
-              "INSERT INTO observation"
-                  + " (passage_id, temps_debut, temps_fin, frequence_mediane, code_taxon,"
-                  + " probabilite) VALUES (1, 0.0, 1.0, 40000, 'ZZZZZZ', 0.5)"))
+              () ->
+                  st.execute(
+                      "INSERT INTO observation"
+                          + " (passage_id, temps_debut, temps_fin, frequence_mediane, code_taxon,"
+                          + " probabilite) VALUES (1, 0.0, 1.0, 40000, 'ZZZZZZ', 0.5)"))
           .as("avec enforceForeignKeys(true), un taxon inexistant doit être rejeté")
           .isInstanceOf(SQLException.class);
     }
