@@ -40,7 +40,7 @@ public class TaxonDao {
     // - préparer puis exécuter la requête (connexion.prepareStatement(sql), ps.executeQuery()) ;
     // - pour chaque ligne, appeler depuis(rs) et l'ajouter à `taxons`.
     // - en cas de SQLException, lever une DataAccessException.
-    try(Connection co = source.getConnection(); 
+    try(Connection co = source.getConnection();
     ResultSet rs = co.)
     return taxons;
   }
