@@ -43,7 +43,6 @@ public class TaxonDao {
     // - en cas de SQLException, lever une DataAccessException.
     try (Connection connexion = source.getConnection();
         PreparedStatement ps = connexion.prepareStatement(sql)) {
-      ps.setString(1, sql);
       try (ResultSet rs = ps.executeQuery()) {
         while (rs.next()) {
           taxons.add(depuis(rs));
@@ -69,10 +68,12 @@ public class TaxonDao {
     // depuis(rs)
     // et l'envelopper dans un Optional ; sinon, laisser `resultat` vide.
     try (Connection connexion = source.getConnection();
-        PreparedStatement ps = connexion.prepareStatement(sql);
-        ResultSet rs = ps.executeQuery()) {
-      while (rs.next()) {
-        resultat = Optional.of(depuis(rs));
+        PreparedStatement ps = connexion.prepareStatement(sql)) {
+      ps.setString(1, code);
+      try (ResultSet rs = ps.executeQuery()) {
+        while (rs.next()) {
+          resultat = Optional.of(depuis(rs));
+        }
       }
     } catch (SQLException e) {
       throw new DataAccessException("Erreur", e);
