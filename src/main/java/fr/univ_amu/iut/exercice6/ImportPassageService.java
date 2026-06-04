@@ -5,6 +5,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 import javax.sql.DataSource;
 
@@ -50,23 +51,56 @@ public class ImportPassageService {
             + " VALUES (?, ?, ?, ?, ?, ?)";
 
     long passageId = -1;
+    Connection connexion = null;
+    try {
+      connexion = source.getConnection();
+      connexion.setAutoCommit(false);
 
-    // TODO exercice 6 : réaliser l'import dans une transaction et renseigner `passageId`.
-    //
-    // 1. Ouvrir une connexion, puis connexion.setAutoCommit(false).
-    // 2. Dans un try :
-    //    - insérer le passage (prepareStatement(sqlPassage, Statement.RETURN_GENERATED_KEYS),
-    //      positionner les paramètres, executeUpdate) ;
-    //    - récupérer l'id généré : keys.next(); passageId = keys.getLong(1) ;
-    //    - pour chaque observation, l'insérer avec ce passageId ;
-    //    - connexion.commit().
-    // 3. catch (SQLException) : connexion.rollback() puis lever une DataAccessException.
-    // 4. finally : refermer la connexion.
-    //
-    // Astuce : ouvrez la connexion AVANT le try afin de pouvoir faire rollback dans le catch.
+      try (PreparedStatement ps =
+          connexion.prepareStatement(sqlPassage, Statement.RETURN_GENERATED_KEYS)) {
+        ps.setString(1, numeroCarre);
+        ps.setString(2, codePoint);
+        ps.setInt(3, numeroPassage);
+        ps.setInt(4, annee);
+        ps.executeUpdate();
+        passageId = ps.getGeneratedKeys().getLong(1);
+        try (PreparedStatement psObservations = connexion.prepareStatement(sqlObservation)) {
+          psObservations.setLong(1, passageId);
+          for (ObservationAImporter observationAImporter : observations) {
+
+            psObservations.setDouble(2, observationAImporter.tempsDebut());
+            psObservations.setDouble(3, observationAImporter.tempsFin());
+            psObservations.setInt(4, observationAImporter.frequenceMediane());
+            psObservations.setString(5, observationAImporter.codeTaxon());
+            psObservations.setDouble(6, observationAImporter.probabilite());
+            psObservations.executeUpdate();
+          }
+        }
+        connexion.commit();
+      }
+    } catch (SQLException e) {
+      annulerSilencieusement(connexion); // un échec -> on annule TOUT
+      throw new DataAccessException("message", e);
+    } finally {
+      fermerSilencieusement(connexion); // toujours refermer
+    }
 
     return passageId;
   }
+
+  // 2. Dans un try :
+  // - insérer le passage (prepareStatement(sqlPassage,
+  // Statement.RETURN_GENERATED_KEYS),
+  // positionner les paramètres, executeUpdate) ;
+  // - récupérer l'id généré : keys.next(); passageId = keys.getLong(1) ;
+  // - pour chaque observation, l'insérer avec ce passageId ;
+  // - connexion.commit().
+  // 3. catch (SQLException) : connexion.rollback() puis lever une
+  // DataAccessException.
+  // 4. finally : refermer la connexion.
+  //
+  // Astuce : ouvrez la connexion AVANT le try afin de pouvoir faire rollback dans
+  // le catch.
 
   /** Nombre de passages en base (fourni, utile pour vérifier qu'un rollback a bien tout annulé). */
   public int nombrePassages() {
